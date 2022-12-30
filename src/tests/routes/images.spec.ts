@@ -1,4 +1,5 @@
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
+import sharp from "sharp";
 import request from "supertest";
 import app from "../../app";
 import { convertImage } from "../../utilities/convertImage";
@@ -26,7 +27,7 @@ describe("GET /api/images", () => {
 
       expect(response.status).toEqual(400);
       expect(response.body.message).toEqual(
-        "filename, width and height query parameter is required"
+        "Bad request, remember to add filename, width and height query parameters"
       );
     });
   });
@@ -37,14 +38,18 @@ describe("convertImage", () => {
   // Test the behavior when the file exists
   describe("when the file exists", () => {
     it("returns a resized image", async () => {
-      const image = await convertImage({
-        filename: "encendaport",
+      const imagePath = await convertImage({
+        filename: "encenadaport",
         width: 200,
         height: 200,
       });
+      expect(existsSync(imagePath)).toEqual(true);
+      expect(imagePath).toContain("encenadaport-200x200.jpg");
 
-      expect(existsSync(image)).toEqual(true);
-      expect(image).toContain("encenadaport-200x200.jpg");
+      const image = readFileSync(imagePath);
+      const imageMetadata = await sharp(image).metadata();
+      expect(imageMetadata.width).toEqual(200);
+      expect(imageMetadata.height).toEqual(200);
     });
   });
 
